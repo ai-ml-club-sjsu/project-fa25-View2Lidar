@@ -19,8 +19,6 @@ We present View2Lidar, a latent diffusion framework for LiDAR reconstruction and
 
 ## Contributors
 
-*For detailed member information including LinkedIn profiles and Discord handles, see [docs/members.csv](docs/members.csv)*
-
 | Name | Role | Email | GitHub |
 |------|------|-------|--------|
 | Hashem Jaber| Project Lead & Lead Instigator | hashem.jaber@sjsu.edu |[hashemja](https://github.com/hashemJaber) |
