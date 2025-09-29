@@ -24,9 +24,9 @@ We present View2Lidar, a latent diffusion framework for LiDAR reconstruction and
 | Name | Role | Email | GitHub |
 |------|------|-------|--------|
 | Hashem Jaber| Project Lead & Lead Instigator | hashem.jaber@sjsu.edu |[hashemja](https://github.com/hashemJaber) |
-| [Member Name 2] | [Role] | [email@university.edu] | [@github-username](https://github.com/username) |
-| [Member Name 3] | [Role] | [email@university.edu] | [@github-username](https://github.com/username) |
-| [Member Name 4] | [Role] | [email@university.edu] | [@github-username](https://github.com/username) |
+| Anthony Luu | Team member | anthony.luu@sjsu.edu | [@github-username](https://github.com/username) |
+| Rodrigo Chen | Team member| rodrigo.chen@sjsu.edu | [@github-username](https://github.com/username) |
+| Kareema Kilani |Team member | kareema.kilani@sjsu.edu | [@github-username](https://github.com/username) |
 
 ## Project Kanban Board
 
