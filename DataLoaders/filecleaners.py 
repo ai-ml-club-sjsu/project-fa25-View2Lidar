@@ -1,0 +1,98 @@
+image_sizes_final=1200
+def gather_paths(log_ids, camera_views=None):
+    if camera_views is None:
+        camera_views = [
+            'ring_front_left', 'ring_front_center', 'ring_front_right',
+            'ring_rear_left', 'ring_rear_right', 'ring_side_left', 'ring_side_right'
+        ]
+
+
+    base_path = '/argotrain/sensor/train'
+    camera_paths_raw = {cam: [] for cam in camera_views}
+    lidar_paths = []
+
+    # Step 1: Gather raw paths
+    for log_id in log_ids:
+        log_base = os.path.join(base_path, log_id)
+        lidar_dir = os.path.join(log_base, 'sensors/lidar')
+        if os.path.exists(lidar_dir):
+            lidar_paths.extend([os.path.join(lidar_dir, f) for f in sorted(os.listdir(lidar_dir))])
+
+        for cam in camera_views:
+            cam_dir = os.path.join(log_base, f'sensors/cameras/{cam}')
+            if os.path.exists(cam_dir):
+                camera_paths_raw[cam].extend([os.path.join(cam_dir, f) for f in sorted(os.listdir(cam_dir))])
+
+    # Step 2: For each camera, match 1 image per lidar
+    camera_paths_matched = {}
+    for cam, image_list in camera_paths_raw.items():
+        matched_images = match_lidar_to_closest_images(lidar_paths, image_list)
+        camera_paths_matched[cam] = sorted(matched_images)  # Same length as lidar_paths
+    stride = 20 #How many images to skip between every scence in both lidar and camera
+    offset = 0  # or any number < stride
+
+    lidar_paths_subset = sorted(lidar_paths)[offset::stride]
+    camera_paths_subset = {
+    cam: paths[offset::stride] for cam, paths in camera_paths_matched.items()
+    }
+
+
+    return lidar_paths_subset, camera_paths_subset
+
+
+## Setting the path for our data loaders.
+
+base_path = '/argotrain/sensor/train'
+all_logs = sorted(os.listdir(base_path))
+random.seed(42) ## For reproducability
+
+
+random.shuffle(all_logs)
+train_logs = all_logs[:45:3]# FIX_MEL fix with proper training shuffled file paths
+val_logs = all_logs[46:47]# FIX_MEL fix with proper val shuffled file paths
+
+
+train_lidar_paths, train_camera_paths = gather_paths(train_logs)
+val_lidar_paths, val_camera_paths = gather_paths(val_logs)
+
+
+
+
+
+import time
+# Training lenght change, change min to increase sample count
+## Its 64 right now to see if we can overfit on 1 batch, if so then the results are promising.
+#for cam in train_camera_paths:
+#   train_camera_paths[cam] = [train_camera_paths[cam][i] for i in train_indices]
+
+lidar_ds = LiDARDataset(train_lidar_paths)
+image_ds = ImageDataset(train_camera_paths, image_size=image_sizes_final)
+train_dataset = MultiGroupDataset(lidar_ds, image_ds, mode='lidar')
+
+
+
+
+lidar_ds_val = LiDARDataset(train_lidar_paths)
+image_ds_val = ImageDataset(train_camera_paths, image_size=image_sizes_final)
+val_dataset = MultiGroupDataset(lidar_ds_val, image_ds_val, mode='lidar')
+
+
+
+
+start_time = time.time()
+
+
+def collate_fn_variable_lidar(batch):
+    if isinstance(batch[0], tuple):
+        #FIX_ME: Turn the lidar_batch into a torch stack, maybe use FPS on lidars to keep the shape the same ? or maybe pad/trunc to have a unanimous shape so we can turn into a tensor
+        lidar_batch = [item[0] for item in batch]
+        image_batch = torch.stack([item[1] for item in batch])
+        return lidar_batch, image_batch
+    elif isinstance(batch[0], torch.Tensor) and batch[0].dim() == 3:
+        return torch.stack(batch)
+    else:
+        return [item for item in batch]
+
+train_data_loader=DataLoader(train_dataset, batch_size=16, shuffle=True, collate_fn=collate_fn_variable_lidar)
+
+
